@@ -1,0 +1,29 @@
+# 쿠버네티스 API 버전
+apiVersion: apps/v1
+# 리소스의 종류 (Deployment는 앱 배포를 관리)
+kind: Deployment
+# 이름 등 리소스의 메타 정보
+metadata:
+  name: user-service
+spec:
+  # #values.yaml 파일에 정의된 replicaCount 값을 가져와 사용
+  replicas: {{ .Values.replicaCount }}
+  # 이 Deployment가 어떤 Pod들을 관리할지 라벨로 선택
+  selector:
+    matchLabels:
+      app: user-service
+  # Pod의 명세서(설계도)
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service-container
+          # values.yaml에 정의된 repository와 tag 값을 조합하여 최종 이미지 주소를 생성
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          # values.yaml의 값을 가져옴
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            # 컨테이너가 내부적으로 사용하는 포트 (우리 앱은 8081)
+            - containerPort: 8081

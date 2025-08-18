@@ -1,0 +1,19 @@
+# 쿠버네티스 API 버전
+apiVersion: v1
+# 리소스의 종류 (Service는 네트워크 연결을 관리)
+kind: Service
+# 서비스의 메타 정보
+metadata:
+  name: user-service
+spec:
+  # values.yaml에 정의된 서비스 타입을 가져옴 (ClusterIP)
+  type: {{ .Values.service.type }}
+  # 서비스가 노출할 포트 정보를 정의
+  ports:
+    - port: {{ .Values.service.port }} # 서비스가 노출할 포트 (8081)
+      targetPort: {{ .Values.service.port }} # 실제 Pod 컨테이너가 사용하는 포트 (8081)
+      protocol: TCP # TCP 프로토콜 사용
+  # 이 서비스가 어떤 라벨을 가진 Pod들에게 트래픽을 전달할지 지정
+  # 'app: user-service' 라벨이 붙은 모든 Pod가 이 서비스의 대상
+  selector:
+    app: user-service
