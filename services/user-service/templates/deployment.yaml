@@ -26,4 +26,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             # 컨테이너가 내부적으로 사용하는 포트 (우리 앱은 8081)
-            - containerPort: 8081
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE # ## Spring Boot의 활성 프로필을 지정하는 환경 변수
+              value: "k8s" # ## 값을 'k8s'로 설정하여 application-k8s.properties 파일을 읽도록 함

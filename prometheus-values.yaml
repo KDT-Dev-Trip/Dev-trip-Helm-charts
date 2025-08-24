@@ -1,0 +1,80 @@
+# ## Alertmanager 설정
+alertmanager:
+  config:
+    # 전역 설정: 모든 알림 수신자에게 적용될 Slack URL을 정의
+    global:
+      # Slack 웹훅 URL
+      slack_api_url: 'https://hooks.slack.com/services/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'
+
+    # 알림 경로 설정: 모든 알림(*)을 'slack-default'라는 수신자에게 전송
+    route:
+      receiver: 'slack-default'
+      # 동일한 alertname과 job을 가진 알림은 하나로 묶어서 전송
+      group_by: ['alertname', 'job']
+
+    # 알림 수신자 목록
+    receivers:
+      - name: 'slack-default'
+        slack_configs:
+          # 메시지를 보낼 Slack 채널을 지정
+          - channel: '#monitoring-alerts' # Slack에서 설정한 채널 이름
+            # 알림이 해결되었을 때 "RESOLVED" 메시지를 보낼지 여부
+            send_resolved: true
+            # Slack 메시지 제목
+            title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for Job: {{ .CommonLabels.job }}'
+            # Slack 메시지 내용
+            text: >-
+              {{ range .Alerts }}
+              *Alert:* `{{ .Labels.alertname }}`
+              *Summary:* {{ .Annotations.summary }}
+              *Instance:* `{{ .Labels.instance }}`
+              *Severity:* `{{ .Labels.severity }}`
+              {{ end }}
+
+# node-exporter가 호스트의 최상위 폴더에 접근하는 기능을 비활성화
+prometheus-node-exporter:
+  enabled: false
+
+# Prometheus 서버 설정
+serverFiles:
+  prometheus.yml:
+    # scrape_configs: Prometheus가 어떤 대상의 데이터를 주기적으로 수집(scrape)할지 정의
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      - job_name: 'user-service'
+        metrics_path: '/actuator/prometheus'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: user-service
+
+      # - job_name: 'ai-service'
+      #   metrics_path: '/actuator/prometheus'
+      #   kubernetes_sd_configs:
+      #     - role: pod
+      #   relabel_configs:
+      #     - source_labels: [__meta_kubernetes_pod_label_app]
+      #       action: keep
+      #       regex: ai-service
+
+  # 경고(Alert) 규칙
+  alerting_rules.yml:
+    groups:
+      - name: GeneralRules
+        rules:
+          # 'InstanceDown'이라는 이름의 경고 규칙
+          - alert: InstanceDown
+            # up 메트릭의 값이 0이면 (인스턴스가 다운되거나 아예 없어지거나) 경고를 발생
+            expr: up{job="user-service"} == 0 or absent(up{job="user-service"})
+            # 1분 동안 지속될 경우에만 최종 알림을 전송
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Instance {{ $labels.instance }} down"
+              description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
