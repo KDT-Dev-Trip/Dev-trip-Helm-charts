@@ -1,16 +1,16 @@
 # ## values.yaml - 이 차트의 모든 설정을 관리합니다.
 
 # ## replicaCount: 쿠버네티스에 이 서비스를 몇 개의 Pod로 띄울지 결정합니다.
-replicaCount: 1
+replicaCount: 2
 
 # ## image: 배포할 Docker 이미지 정보를 관리합니다.
 image:
   # ## repository: 이미지가 저장된 Docker Hub 리포지토리 주소
   repository: choi000927/user-management-service
   # ## pullPolicy: 이미지를 항상 새로 받아올지(Always) 여부를 결정합니다.
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # ## tag: 이미지의 버전을 지정합니다. Jenkins가 CI/CD 과정에서 이 값을 자동으로 업데이트할 것입니다.
-  tag: "0.0.8"
+  tag: "0.0.1"
 
 # ## service: 쿠버네티스 서비스(네트워크) 관련 설정을 관리합니다.
 service:
