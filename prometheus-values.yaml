@@ -1,28 +1,19 @@
-# ## Alertmanager 설정
+# prometheus-values.yaml (개선된 최종 버전)
+
+# ## Alertmanager 설정 (기존과 동일)
 alertmanager:
   config:
-    # 전역 설정: 모든 알림 수신자에게 적용될 Slack URL을 정의
     global:
-      # Slack 웹훅 URL
       slack_api_url: 'https://hooks.slack.com/services/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'
-
-    # 알림 경로 설정: 모든 알림(*)을 'slack-default'라는 수신자에게 전송
     route:
       receiver: 'slack-default'
-      # 동일한 alertname과 job을 가진 알림은 하나로 묶어서 전송
       group_by: ['alertname', 'job']
-
-    # 알림 수신자 목록
     receivers:
       - name: 'slack-default'
         slack_configs:
-          # 메시지를 보낼 Slack 채널을 지정
-          - channel: '#monitoring-alerts' # Slack에서 설정한 채널 이름
-            # 알림이 해결되었을 때 "RESOLVED" 메시지를 보낼지 여부
+          - channel: '#monitoring-alerts'
             send_resolved: true
-            # Slack 메시지 제목
             title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for Job: {{ .CommonLabels.job }}'
-            # Slack 메시지 내용
             text: >-
               {{ range .Alerts }}
               *Alert:* `{{ .Labels.alertname }}`
@@ -31,50 +22,50 @@ alertmanager:
               *Severity:* `{{ .Labels.severity }}`
               {{ end }}
 
-# node-exporter가 호스트의 최상위 폴더에 접근하는 기능을 비활성화
+# ## node-exporter 권한 문제 해결을 위한 설정
 prometheus-node-exporter:
-  enabled: false
+  enabled: true
+  securityContext:
+    privileged: true
 
-# Prometheus 서버 설정
+# ## [⭐️ 수정] Prometheus 서버에 경고 규칙을 추가합니다.
 serverFiles:
-  prometheus.yml:
-    # scrape_configs: Prometheus가 어떤 대상의 데이터를 주기적으로 수집(scrape)할지 정의
-    scrape_configs:
-      - job_name: 'prometheus'
-        static_configs:
-          - targets: ['localhost:9090']
-
-      - job_name: 'user-service'
-        metrics_path: '/actuator/prometheus'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            action: keep
-            regex: user-service
-
-      # - job_name: 'ai-service'
-      #   metrics_path: '/actuator/prometheus'
-      #   kubernetes_sd_configs:
-      #     - role: pod
-      #   relabel_configs:
-      #     - source_labels: [__meta_kubernetes_pod_label_app]
-      #       action: keep
-      #       regex: ai-service
-
-  # 경고(Alert) 규칙
   alerting_rules.yml:
     groups:
-      - name: GeneralRules
+      - name: MicroserviceRules
         rules:
-          # 'InstanceDown'이라는 이름의 경고 규칙
-          - alert: InstanceDown
-            # up 메트릭의 값이 0이면 (인스턴스가 다운되거나 아예 없어지거나) 경고를 발생
+          - alert: UserServiceDown
             expr: up{job="user-service"} == 0 or absent(up{job="user-service"})
-            # 1분 동안 지속될 경우에만 최종 알림을 전송
             for: 1m
             labels:
               severity: critical
             annotations:
-              summary: "Instance {{ $labels.instance }} down"
-              description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+              summary: "User Service instance is down or missing"
+              description: "The job 'user-service' has no running instances."
+          # - alert: AIServiceDown
+          #   expr: up{job="ai-service"} == 0 or absent(up{job="ai-service"})
+          #   for: 1m
+          #   labels:
+          #     severity: critical
+          #   annotations:
+          #     summary: "AI Service instance is down or missing"
+          #     description: "The job 'ai-service' has no running instances."
+
+# ## [⭐️ 수정] Prometheus가 기본 감시 대상 외에, 우리 서비스를 '추가'로 감시하도록 설정합니다.
+extraScrapeConfigs: |
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: user-service
+  # - job_name: 'ai-service'
+  #   metrics_path: '/actuator/prometheus'
+  #   kubernetes_sd_configs:
+  #     - role: pod
+  #   relabel_configs:
+  #     - source_labels: [__meta_kubernetes_pod_label_app]
+  #       action: keep
+  #       regex: ai-service
