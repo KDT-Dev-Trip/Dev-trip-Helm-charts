@@ -42,14 +42,38 @@ serverFiles:
             annotations:
               summary: "User Service instance is down or missing"
               description: "The job 'user-service' has no running instances."
-          # - alert: AIServiceDown
-          #   expr: up{job="ai-service"} == 0 or absent(up{job="ai-service"})
-          #   for: 1m
-          #   labels:
-          #     severity: critical
-          #   annotations:
-          #     summary: "AI Service instance is down or missing"
-          #     description: "The job 'ai-service' has no running instances."
+          - alert: AuthServiceDown
+            expr: up{job="auth-service"} == 0 or absent(up{job="auth-service"})
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Auth Service instance is down or missing"
+              description: "The job 'auth-service' has no running instances."
+          - alert: PaymentServiceDown
+            expr: up{job="payment-service"} == 0 or absent(up{job="payment-service"})
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Payment Service instance is down or missing"
+              description: "The job 'payment-service' has no running instances."
+          - alert: MissionServiceDown
+            expr: up{job="mission-service"} == 0 or absent(up{job="mission-service"})
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Mission Service instance is down or missing"
+              description: "The job 'mission-service' has no running instances."
+          - alert: AIServiceDown
+            expr: up{job="ai-service"} == 0 or absent(up{job="ai-service"})
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "AI Service instance is down or missing"
+              description: "The job 'ai-service' has no running instances."
 
 # ## [⭐️ 수정] Prometheus가 기본 감시 대상 외에, 우리 서비스를 '추가'로 감시하도록 설정합니다.
 extraScrapeConfigs: |
@@ -61,11 +85,35 @@ extraScrapeConfigs: |
       - source_labels: [__meta_kubernetes_pod_label_app]
         action: keep
         regex: user-service
-  # - job_name: 'ai-service'
-  #   metrics_path: '/actuator/prometheus'
-  #   kubernetes_sd_configs:
-  #     - role: pod
-  #   relabel_configs:
-  #     - source_labels: [__meta_kubernetes_pod_label_app]
-  #       action: keep
-  #       regex: ai-service
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: auth-service
+  - job_name: 'payment-service'
+    metrics_path: '/actuator/prometheus'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: payment-service
+  - job_name: 'mission-service'
+    metrics_path: '/actuator/prometheus'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: mission-service
+  - job_name: 'ai-service'
+    metrics_path: '/actuator/prometheus'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: ai-service

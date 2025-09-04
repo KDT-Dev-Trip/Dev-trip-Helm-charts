@@ -1,0 +1,27 @@
+# ## values.yaml - 이 차트의 모든 설정을 관리합니다.
+
+# ## replicaCount: 쿠버네티스에 이 서비스를 몇 개의 Pod로 띄울지 결정합니다.
+replicaCount: 2
+
+# ## image: 배포할 Docker 이미지 정보를 관리합니다.
+image:
+  # ## repository: 이미지가 저장된 Docker Hub 리포지토리 주소
+  repository: choi000927/mission-service
+  # ## pullPolicy: 이미지를 항상 새로 받아올지(Always) 여부를 결정합니다.
+  pullPolicy: Always
+  # ## tag: 이미지의 버전을 지정합니다. Jenkins가 CI/CD 과정에서 이 값을 자동으로 업데이트할 것입니다.
+  tag: "0.0.1"
+
+# ## service: 쿠버네티스 서비스(네트워크) 관련 설정을 관리합니다.
+service:
+  # ## type: 서비스의 타입을 지정합니다. ClusterIP는 클러스터 내부에서만 접근 가능한 고유 주소를 만듭니다.
+  type: ClusterIP
+  # ## port: 서비스가 노출할 포트 번호입니다.
+  port: 8084
+
+# ## ingress: 외부 트래픽을 어떻게 서비스로 연결할지 관리합니다. (지금은 비활성화)
+ingress:
+  enabled: false
+
+# ## resources: Pod가 사용할 CPU와 메모리의 양을 지정합니다. (지금은 비워둠)
+resources: {}

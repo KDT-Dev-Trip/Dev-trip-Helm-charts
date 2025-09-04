@@ -1,0 +1,32 @@
+# 쿠버네티스 API 버전
+apiVersion: apps/v1
+# 리소스의 종류 (Deployment는 앱 배포를 관리)
+kind: Deployment
+# 이름 등 리소스의 메타 정보
+metadata:
+  name: ai-service
+spec:
+  # #values.yaml 파일에 정의된 replicaCount 값을 가져와 사용
+  replicas: {{ .Values.replicaCount }}
+  # 이 Deployment가 어떤 Pod들을 관리할지 라벨로 선택
+  selector:
+    matchLabels:
+      app: ai-service
+  # Pod의 명세서(설계도)
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service-container
+          # values.yaml에 정의된 repository와 tag 값을 조합하여 최종 이미지 주소를 생성
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          # values.yaml의 값을 가져옴
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            # 컨테이너가 내부적으로 사용하는 포트 (우리 앱은 8085)
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE # ## Spring Boot의 활성 프로필을 지정하는 환경 변수
+              value: "k8s" # ## 값을 'k8s'로 설정하여 application-k8s.properties 파일을 읽도록 함
